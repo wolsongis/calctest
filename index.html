@@ -3,39 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Concrete Beam Design Calculator</title>
+    <title>Concrete and Steel Stress Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        input {
+            margin-bottom: 10px;
+        }
+        button {
+            margin-top: 10px;
+        }
+        .output {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Concrete Beam Design Calculator</h1>
+    <h1>Concrete and Steel Stress Analysis</h1>
+    <p>This program calculates a, c, tension strain in steel, the maximum internal moment, and the design capacity moment.</p>
+    
+    <label for="fc">Compressive stress of concrete (psi): </label>
+    <input type="number" id="fc"><br>
 
-    <label for="fc">Compressive Stress of Concrete (psi):</label>
-    <input type="number" id="fc" required><br><br>
+    <label for="fy">Yield stress of steel (psi): </label>
+    <input type="number" id="fy"><br>
 
-    <label for="fy">Yield Stress of Steel (psi):</label>
-    <input type="number" id="fy" required><br><br>
+    <label for="As">Cross-sectional area of steel (in^2): </label>
+    <input type="number" id="As"><br>
 
-    <label for="As">Cross-Sectional Area of Steel (in^2):</label>
-    <input type="number" id="As" required><br><br>
+    <label for="d">Depth of steel (inches): </label>
+    <input type="number" id="d"><br>
 
-    <label for="d">Depth of Steel (inches):</label>
-    <input type="number" id="d" required><br><br>
+    <label for="b">Length of the base (inches): </label>
+    <input type="number" id="b"><br>
 
-    <label for="b">Length of Base (inches):</label>
-    <input type="number" id="b" required><br><br>
+    <button onclick="performAnalysis()">Calculate</button>
 
-    <button onclick="calculate()">Calculate</button>
-
-    <h3>Results</h3>
-    <div id="results"></div>
+    <div id="output" class="output"></div>
 
     <script>
-        function calculate() {
+        function performAnalysis() {
+            // Get input values
             const fc = parseFloat(document.getElementById('fc').value);
             const fy = parseFloat(document.getElementById('fy').value);
             const As = parseFloat(document.getElementById('As').value);
             const d = parseFloat(document.getElementById('d').value);
             const b = parseFloat(document.getElementById('b').value);
 
+            // Validate inputs
+            if (isNaN(fc) || isNaN(fy) || isNaN(As) || isNaN(d) || isNaN(b)) {
+                alert("Please enter all values.");
+                return;
+            }
+
+            let output = '';
+            
+            // Assign beta1 value
             let b1;
             if (fc <= 4000 && fc > 0) {
                 b1 = 0.85;
@@ -45,42 +70,51 @@
                 b1 = 0.65;
             }
 
+            // Check if As exceeds minimum value
             const Asmin1 = (3 * Math.sqrt(fc) * b * d) / fy;
             const Asmin2 = (200 * b * d) / fy;
             const Asmin = Math.max(Asmin1, Asmin2);
-
+            
             if (As < Asmin) {
-                document.getElementById('results').innerHTML = 'The cross-sectional area of the steel does NOT exceed the minimum. This section cannot be used!';
-                return;
+                output += 'The cross-sectional area of the steel does NOT exceed the minimum.\n';
+                output += '!!!DISREGARD ALL FOLLOWING VALUES. This section cannot be used!!!\n';
             } else {
-                document.getElementById('results').innerHTML = 'The cross-sectional area exceeds the minimum.<br>';
+                output += 'The cross-sectional area exceeds the minimum.\n';
             }
 
-            let T = As * fy;
-            let a = (As * fy) / (0.85 * fc * b);
-            let c = a / b1;
-            let stlstrain = ((d - c) / c) * 0.003;
+            // Solve for a
+            const a = (As * fy) / (0.85 * fc * b);
+            output += `a = ${a.toFixed(2)} in\n`;
 
+            // Solve for c
+            const c = a / b1;
+            output += `c = ${c.toFixed(2)} in\n`;
+
+            // Solve for strain in steel
+            const stlstrain = ((d - c) / c) * 0.003;
+            output += `Strain in steel is ${stlstrain.toFixed(3)}\n`;
+
+            // Calculate phi
             let phi;
             if (stlstrain >= 0.005) {
                 phi = 0.9;
             } else if (stlstrain >= 0.004 && stlstrain < 0.005) {
                 phi = 0.65 + (stlstrain - 0.002) * (250 / 3);
             } else {
-                document.getElementById('results').innerHTML += 'Tension strain in steel is NOT ACI compliant.';
-                return;
+                output += 'Tension strain in steel is NOT ACI compliant.\n';
+                output += '!!!DISREGARD ALL FOLLOWING VALUES. This section cannot be used!!!\n';
             }
 
-            let Mn = As * fy * (d - (a / 2)) * (1 / 12000);
-            let descap = phi * Mn;
+            // Solve for maximum internal moment
+            const Mn = As * fy * (d - (a / 2)) * (1 / 12000);
+            output += `Maximum internal moment Mn = ${Mn.toFixed(2)} k*ft\n`;
 
-            document.getElementById('results').innerHTML += `
-                a = ${a.toFixed(2)} in<br>
-                c = ${c.toFixed(2)} in<br>
-                Strain in steel = ${stlstrain.toFixed(3)}<br>
-                Maximum internal moment Mn = ${Mn.toFixed(2)} k*ft<br>
-                Usable/design capacity = ${descap.toFixed(2)} k*ft
-            `;
+            // Solve for usable/design capacity
+            const descap = phi * Mn;
+            output += `Usable/design capacity (phi*Mn) is ${descap.toFixed(2)} k*ft\n`;
+
+            // Display the results
+            document.getElementById('output').textContent = output;
         }
     </script>
 </body>
