@@ -17,6 +17,15 @@
         }
         .output {
             margin-top: 20px;
+            white-space: pre-wrap; /* Preserve newlines and spaces */
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -58,7 +67,8 @@
                 return;
             }
 
-            let output = '';
+            let output = 'Results:\n\n';
+            let errorMessage = '';
             
             // Assign beta1 value
             let b1;
@@ -76,8 +86,8 @@
             const Asmin = Math.max(Asmin1, Asmin2);
             
             if (As < Asmin) {
-                output += 'The cross-sectional area of the steel does NOT exceed the minimum.\n';
-                output += '!!!DISREGARD ALL FOLLOWING VALUES. This section cannot be used!!!\n';
+                errorMessage += 'The cross-sectional area of the steel does NOT exceed the minimum.\n';
+                errorMessage += '!!!DISREGARD ALL FOLLOWING VALUES. This section cannot be used!!!\n';
             } else {
                 output += 'The cross-sectional area exceeds the minimum.\n';
             }
@@ -101,8 +111,8 @@
             } else if (stlstrain >= 0.004 && stlstrain < 0.005) {
                 phi = 0.65 + (stlstrain - 0.002) * (250 / 3);
             } else {
-                output += 'Tension strain in steel is NOT ACI compliant.\n';
-                output += '!!!DISREGARD ALL FOLLOWING VALUES. This section cannot be used!!!\n';
+                errorMessage += 'Tension strain in steel is NOT ACI compliant.\n';
+                errorMessage += '!!!DISREGARD ALL FOLLOWING VALUES. This section cannot be used!!!\n';
             }
 
             // Solve for maximum internal moment
@@ -113,8 +123,12 @@
             const descap = phi * Mn;
             output += `Usable/design capacity (phi*Mn) is ${descap.toFixed(2)} k*ft\n`;
 
-            // Display the results
-            document.getElementById('output').textContent = output;
+            // Combine error messages and results
+            if (errorMessage) {
+                document.getElementById('output').innerHTML = `<span class="error">${errorMessage}</span>`;
+            } else {
+                document.getElementById('output').innerHTML = `<span class="success">${output}</span>`;
+            }
         }
     </script>
 </body>
