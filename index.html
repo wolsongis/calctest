@@ -3,48 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Square Root Calculator</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 50px;
-        }
-        input {
-            padding: 10px;
-            font-size: 16px;
-            width: 200px;
-        }
-        button {
-            padding: 10px 15px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        #result {
-            font-size: 18px;
-            margin-top: 20px;
-        }
-    </style>
+    <title>Concrete Beam Design Calculator</title>
 </head>
 <body>
+    <h1>Concrete Beam Design Calculator</h1>
 
-    <h2>Square Root Calculator</h2>
-    <p>Enter a number to calculate its square root:</p>
-    <input type="number" id="numberInput" placeholder="Enter a number">
-    <button onclick="calculateSquareRoot()">Calculate</button>
-    <p id="result"></p>
+    <label for="fc">Compressive Stress of Concrete (psi):</label>
+    <input type="number" id="fc" required><br><br>
+
+    <label for="fy">Yield Stress of Steel (psi):</label>
+    <input type="number" id="fy" required><br><br>
+
+    <label for="As">Cross-Sectional Area of Steel (in^2):</label>
+    <input type="number" id="As" required><br><br>
+
+    <label for="d">Depth of Steel (inches):</label>
+    <input type="number" id="d" required><br><br>
+
+    <label for="b">Length of Base (inches):</label>
+    <input type="number" id="b" required><br><br>
+
+    <button onclick="calculate()">Calculate</button>
+
+    <h3>Results</h3>
+    <div id="results"></div>
 
     <script>
-        function calculateSquareRoot() {
-            let num = document.getElementById("numberInput").value;
-            if (num < 0) {
-                document.getElementById("result").innerText = "Error: Cannot calculate square root of a negative number.";
-            } else {
-                let sqrtValue = Math.sqrt(num).toFixed(4);
-                document.getElementById("result").innerText = `Square Root: ${sqrtValue}`;
+        function calculate() {
+            const fc = parseFloat(document.getElementById('fc').value);
+            const fy = parseFloat(document.getElementById('fy').value);
+            const As = parseFloat(document.getElementById('As').value);
+            const d = parseFloat(document.getElementById('d').value);
+            const b = parseFloat(document.getElementById('b').value);
+
+            let b1;
+            if (fc <= 4000 && fc > 0) {
+                b1 = 0.85;
+            } else if (fc > 4000 && fc < 8000) {
+                b1 = 0.85 - ((fc - 4000) / 1000) * 0.05;
+            } else if (fc >= 8000) {
+                b1 = 0.65;
             }
+
+            const Asmin1 = (3 * Math.sqrt(fc) * b * d) / fy;
+            const Asmin2 = (200 * b * d) / fy;
+            const Asmin = Math.max(Asmin1, Asmin2);
+
+            if (As < Asmin) {
+                document.getElementById('results').innerHTML = 'The cross-sectional area of the steel does NOT exceed the minimum. This section cannot be used!';
+                return;
+            } else {
+                document.getElementById('results').innerHTML = 'The cross-sectional area exceeds the minimum.<br>';
+            }
+
+            let T = As * fy;
+            let a = (As * fy) / (0.85 * fc * b);
+            let c = a / b1;
+            let stlstrain = ((d - c) / c) * 0.003;
+
+            let phi;
+            if (stlstrain >= 0.005) {
+                phi = 0.9;
+            } else if (stlstrain >= 0.004 && stlstrain < 0.005) {
+                phi = 0.65 + (stlstrain - 0.002) * (250 / 3);
+            } else {
+                document.getElementById('results').innerHTML += 'Tension strain in steel is NOT ACI compliant.';
+                return;
+            }
+
+            let Mn = As * fy * (d - (a / 2)) * (1 / 12000);
+            let descap = phi * Mn;
+
+            document.getElementById('results').innerHTML += `
+                a = ${a.toFixed(2)} in<br>
+                c = ${c.toFixed(2)} in<br>
+                Strain in steel = ${stlstrain.toFixed(3)}<br>
+                Maximum internal moment Mn = ${Mn.toFixed(2)} k*ft<br>
+                Usable/design capacity = ${descap.toFixed(2)} k*ft
+            `;
         }
     </script>
-
 </body>
 </html>
