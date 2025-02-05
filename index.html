@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Square Root Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            width: 200px;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #result {
+            font-size: 18px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Square Root Calculator</h2>
+    <p>Enter a number to calculate its square root:</p>
+    <input type="number" id="numberInput" placeholder="Enter a number">
+    <button onclick="calculateSquareRoot()">Calculate</button>
+    <p id="result"></p>
+
+    <script>
+        function calculateSquareRoot() {
+            let num = document.getElementById("numberInput").value;
+            if (num < 0) {
+                document.getElementById("result").innerText = "Error: Cannot calculate square root of a negative number.";
+            } else {
+                let sqrtValue = Math.sqrt(num).toFixed(4);
+                document.getElementById("result").innerText = `Square Root: ${sqrtValue}`;
+            }
+        }
+    </script>
+
+</body>
+</html>
